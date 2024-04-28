@@ -565,7 +565,7 @@ module  CONV(
   //
 
   // fully connected
-  reg [20:0] fc0;
+  wire [20:0] fc0;
   reg [20:0] fc;
 
   mul FC (
