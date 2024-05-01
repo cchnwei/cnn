@@ -1,34 +1,34 @@
 `timescale 1ns/10ps
 
 module  CONV(
-  input				clk,
-  input				reset,
-  output logic		busy,	
-  input				ready,	
-  //gray-image mem
-  output logic [13:0]	iaddr,
-  input  		 [7:0]	idata,	
-  output logic		ioe,
-  //L0 mem
-  output logic		wen_L0,
-  output logic		oe_L0,
-  output logic [13:0]	addr_L0,
-  output logic [11:0] w_data_L0,
-  input  		 [11:0] r_data_L0,
-  //L1 mem
-  output logic 		wen_L1,
-  output logic		oe_L1,
-  output logic [11:0]	addr_L1,
-  output logic [11:0]	w_data_L1,
-  input  		 [11:0]	r_data_L1,
+  input				               clk,
+  input				               reset,
+  output logic               busy,	
+  input				               ready,	
+  //gray-image mem        
+  output logic        [13:0] iaddr,
+  input  		          [7:0]	 idata,	
+  output logic       		     ioe,
+  //L0 mem                
+  output logic        	     wen_L0,
+  output logic        	     oe_L0,
+  output logic        [13:0] addr_L0,
+  output logic        [11:0] w_data_L0,
+  input  		          [11:0] r_data_L0,
+  //L1 mem                
+  output logic        		   wen_L1,
+  output logic       		     oe_L1,
+  output logic        [11:0] addr_L1,
+  output logic        [11:0] w_data_L1,
+  input  		          [11:0] r_data_L1,
   //weight mem
-  output logic		oe_weight,
-  output logic [15:0]	addr_weight,
-  input  logic signed  [7:0]  r_data_weight,
+  output logic		           oe_weight,
+  output logic        [15:0] addr_weight,
+  input  logic signed [7:0]  r_data_weight,
   //L2 mem
-  output logic		wen_L2,
-  output logic [3:0]	addr_L2,
-  output logic [31:0]	w_data_L2
+  output logic		           wen_L2,
+  output logic        [3:0]	 addr_L2,
+  output logic        [31:0] w_data_L2
   );
 
 //you can only motify your code below
