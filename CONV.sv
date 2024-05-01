@@ -43,26 +43,31 @@ module  CONV(
 
   // layer1 fsm
   localparam EXECUTE1 = 0;
-  localparam WRITE1   = 1;
-  localparam IDLE1    = 2;
-  localparam DONE1    = 3;
+  localparam IDLE10   = 1;
+  localparam WRITE1   = 2;
+  localparam IDLE11   = 3;
+  localparam DONE1    = 4;
   //
 
   // layer2 fsm
   localparam INITIAL2 = 0;
-  localparam READ2    = 1;
-  localparam IDLE20   = 2;
-  localparam IDLE21   = 3;
-  localparam WRITE2   = 4;
+  localparam IDLE20   = 1;
+  localparam IDLE21   = 2;
+  localparam READ2    = 3;
+  localparam IDLE22   = 4;
+  localparam IDLE23   = 5;
+  localparam IDLE24   = 6;
+  localparam IDLE25   = 7;
+  localparam WRITE2   = 8;
   //
 
   // define reg or wire
   reg  [2:0]  layer0_cs;
   reg  [2:0]  layer0_ns;
-  reg  [1:0]  layer1_cs;
-  reg  [1:0]  layer1_ns;
-  reg  [2:0]  layer2_cs;
-  reg  [2:0]  layer2_ns;
+  reg  [2:0]  layer1_cs;
+  reg  [2:0]  layer1_ns;
+  reg  [3:0]  layer2_cs;
+  reg  [3:0]  layer2_ns;
   reg  [7:0]  column0_cnt;
   reg  [7:0]  column1_cnt;
   reg  [7:0]  row0_cnt;
@@ -89,7 +94,6 @@ module  CONV(
   assign write1_done = (addr_L1==4095);
   assign sr1_en = (layer0_cs>=READ0);
   assign sr2_en = (layer1_cs>=EXECUTE1);
-  assign busy = (addr_weight==40961);
   assign idle = (column1_cnt>=126 && column1_cnt<255);
   //
 
@@ -133,7 +137,6 @@ module  CONV(
   // layer0 control signal
   always @(*) begin
     ioe=1;
-    wen_L0=0;
     case (layer0_cs)
       INITIAL0:
         begin
@@ -149,13 +152,27 @@ module  CONV(
         end
       WRITE0:
         begin
-          wen_L0=1;
+
         end
       DONE0:
         begin
           
         end
     endcase
+  end
+  //
+
+  // layer0 write enable
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      wen_L0<=0;
+    end else begin
+      if (layer0_ns==WRITE0) begin
+        wen_L0<=1;
+      end else begin
+        wen_L0<=0;
+      end
+    end
   end
   //
 
@@ -170,17 +187,21 @@ module  CONV(
     case (layer1_cs)
       EXECUTE1:
         begin
-          if (execute1_done)  layer1_ns=WRITE1;
+          if (execute1_done)  layer1_ns=IDLE10;
           else                layer1_ns=EXECUTE1; // loopback
-        end 
+        end
+      IDLE10:
+        begin
+                              layer1_ns=WRITE1;
+        end
       WRITE1:
         begin
           if (write1_done)    layer1_ns=DONE1;
-          else                layer1_ns=IDLE1;
+          else                layer1_ns=IDLE11;
         end
-      IDLE1:
+      IDLE11:
         begin
-          if (idle)           layer1_ns=IDLE1;    // loopback
+          if (idle)           layer1_ns=IDLE11;   // loopback
           else                layer1_ns=WRITE1;
         end
       DONE1:
@@ -191,27 +212,17 @@ module  CONV(
   end
   //
 
-  // layer1 control signal
-  always @(*) begin
-    wen_L1=0;
-    case (layer1_cs)
-      EXECUTE1:
-        begin
-
-        end
-      WRITE1:
-        begin
-          wen_L1=1;
-        end
-      IDLE1:
-        begin
-          
-        end
-      DONE1:
-        begin
-
-        end
-    endcase
+  // layer1 write enable
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      wen_L1<=0;
+    end else begin
+      if (layer1_ns==WRITE1) begin
+        wen_L1<=1;
+      end else begin
+        wen_L1<=0;
+      end
+    end
   end
   //
 
@@ -222,27 +233,43 @@ module  CONV(
   end
 
   always @(*) begin
-    layer2_ns=3'bx;
+    layer2_ns=4'bx;
     case (layer2_cs)
       INITIAL2:
         begin
-          if (layer1_cs==DONE1) layer2_ns=IDLE21;
+          if (layer1_cs==DONE1) layer2_ns=IDLE20;
           else                  layer2_ns=INITIAL2; // loopback
-        end
-      READ2:
-        begin
-          if (read2_done)       layer2_ns=IDLE20;
-          else                  layer2_ns=READ2;    // loopback
         end
       IDLE20:
         begin
-                                layer2_ns=WRITE2; 
+                                layer2_ns=IDLE21; 
         end      
       IDLE21:      
         begin      
                                 layer2_ns=READ2;   
         end
-      WRITE2: // rst fc_scc     
+      READ2:
+        begin
+          if (read2_done)       layer2_ns=IDLE22;
+          else                  layer2_ns=READ2;    // loopback
+        end
+      IDLE22:
+        begin
+                                layer2_ns=IDLE23;
+        end
+      IDLE23:
+        begin
+                                layer2_ns=IDLE24;   
+        end
+      IDLE24:
+        begin
+                                layer2_ns=IDLE25;   
+        end
+      IDLE25: // rst fc_scc 
+        begin
+                                layer2_ns=WRITE2;   
+        end
+      WRITE2:     
         begin      
                                 layer2_ns=READ2;   
         end
@@ -254,30 +281,48 @@ module  CONV(
   always @(*) begin
     wen_L2=0;
     oe_weight=1;
-    oe_L1=1;
+    oe_L1=0;
     case (layer2_cs)
       INITIAL2:
         begin
 
         end
-      READ2:
-        begin
-
-        end
       IDLE20:
         begin
-
+          oe_L1=1;
         end
       IDLE21:
         begin
-
+          oe_L1=1;
         end
-      WRITE2: // rst fc_scc 
+      READ2:
+        begin
+          oe_L1=1;
+        end
+      IDLE22:
+        begin
+          oe_L1=1;
+        end
+      IDLE23:
+        begin
+          oe_L1=1;
+        end
+      IDLE24:
+        begin
+          oe_L1=1;
+        end
+      IDLE25: // rst fc_scc 
+        begin
+          oe_L1=1;
+        end
+      WRITE2: 
         begin
           wen_L2=1;
+          oe_L1=1;
         end
     endcase
   end
+  //
 
   // grayscale addr
   always @(posedge clk, posedge reset) begin
@@ -459,25 +504,19 @@ module  CONV(
 
   // conv-pipeline stage2
   wire [12:0] add6_2;
-  reg  [12:0] add6; // convolution output
   assign add6_2 = add4+add5;
 
   always @(posedge clk, posedge reset) begin
     if (reset) begin
-      add6 <= 0;
+      w_data_L0 <= 0;
     end else begin
-      add6 <= add6_2;
+      if (add6_2[12]) begin
+        w_data_L0 <= 0;
+      end else begin
+        w_data_L0 <= add6_2;
+      end
     end
   end
-
-  // write data to L0 RAM, relu
-  always @(*) begin
-    w_data_L0 = add6;
-    if (add6[12]) begin
-      w_data_L0 = 0;
-    end
-  end
-  //
 
   // L0 RAM address
   always @(posedge clk, posedge reset) begin
@@ -506,7 +545,6 @@ module  CONV(
 
   // maxpooling
   reg [11:0] max_temp;
-  reg [11:0] max;
 
   always @(posedge clk, posedge reset) begin
     if (reset) begin
@@ -520,21 +558,19 @@ module  CONV(
     end
   end
 
-  always @(*) begin
-    max = 0;
-    if (max_temp>= reg0 && max_temp>= reg1) begin
-      max = max_temp;
-    end else if (reg0>= max_temp && reg0>= reg1) begin
-      max = reg0;
-    end else begin
-      max = reg1;
-    end
-  end
-  //
-
   // write data to L1 RAM
-  always @(*) begin
-    w_data_L1 = max;
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      w_data_L1 <= 0;
+    end else begin
+      if (max_temp>= reg0 && max_temp>= reg1) begin
+        w_data_L1 <= max_temp;
+      end else if (reg0>= max_temp && reg0>= reg1) begin
+        w_data_L1 <= reg0;
+      end else begin
+        w_data_L1 <= reg1;
+      end
+    end
   end
   //
 
@@ -543,9 +579,7 @@ module  CONV(
     if (reset) begin
       addr_L1 <= 0;
     end else begin
-      if (wen_L1) begin
-        addr_L1 <= addr_L1+1;
-      end else if (layer1_cs==DONE1) begin
+      if (wen_L1||layer1_cs==DONE1) begin
         addr_L1 <= addr_L1+1;
       end
     end
@@ -564,18 +598,30 @@ module  CONV(
   end
   //
 
+  // read data from weight_RAM, L1_RAM
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      weight <= 0;
+      flatten <= 0;
+    end else begin
+      weight <= r_data_weight;
+      flatten <= r_data_L1;
+    end
+  end
+  //
+
   // fully connected
   wire [20:0] fc0;
   reg [20:0] fc;
 
   mul FC (
-    .in1(r_data_weight),
-    .in2({1'b0,r_data_L1}),
+    .in1(weight),
+    .in2({1'b0,flatten}),
     .out(fc0)
   );
   //
 
-  //
+  // 
   always @(posedge clk, posedge reset) begin
     if (reset) begin
       fc <= 0;
@@ -586,34 +632,76 @@ module  CONV(
   //
 
   // fc_acc
-  reg [31:0] fc_acc;
-  wire [31:0] fc_sum;
-  assign fc_sum = $signed(fc_acc)+$signed(fc);
+  reg  [31:0] fc_acc;
+  wire [31:0] fc_sum0;
+  wire [31:0] signed_fc;
+  wire [31:0] signed_fc_acc;
 
+  // fc_sum0 = $signed(fc_acc) + $signed(fc) rst
+  assign signed_fc = $signed(fc);
+  assign signed_fc_acc = $signed(fc_acc);
+
+  CLA32 cla (
+    .a(signed_fc),
+    .b(signed_fc_acc),
+    .cin(1'b0),
+    .out(fc_sum0)
+  );
+  //
+
+  // accumulator
   always @(posedge clk, posedge reset) begin
     if (reset) begin
       fc_acc <= 0;
     end else begin 
-      if (layer2_cs==WRITE2) begin
+      if (layer2_cs==IDLE24) begin
         fc_acc <= 0;
       end else begin
-        if ((layer2_cs==READ2||layer2_cs==IDLE21||layer2_cs==IDLE20) && addr_L1!=1) begin
-          fc_acc <= fc_sum;
+        if ((layer2_cs==READ2||layer2_cs==IDLE20||layer2_cs==IDLE21||layer2_cs==IDLE22||layer2_cs==IDLE23||layer2_cs==IDLE25||layer2_cs==WRITE2) && addr_L1!=2) begin
+          fc_acc <= fc_sum0;
         end
       end
     end
   end
   //
 
+  //
+  reg [31:0] fc_sum;
+
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      fc_sum <= 0;
+    end else begin
+      fc_sum <= fc_sum0;
+    end
+  end
+  //
+
   // leaky relu
+  reg [31:0] w_data_L2_reg;
   wire [15:0] fc_sum_shf;
   assign fc_sum_shf = fc_sum>>16;
 
   always @(*) begin
-    w_data_L2 = fc_sum;
     if (fc_sum[31]==1) begin
-      w_data_L2 = {16'hffff,fc_sum_shf}; 
-    end        
+      w_data_L2_reg = $signed(fc_sum_shf);
+    end else begin
+      w_data_L2_reg = fc_sum;
+    end
+  end
+  //
+
+  //
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      w_data_L2 <= 0;
+    end else begin
+      if (layer2_cs==INITIAL2) begin
+        w_data_L2 <= 0;
+      end else begin
+        w_data_L2 <= w_data_L2_reg;
+      end
+    end       
   end
   //
 
@@ -629,6 +717,118 @@ module  CONV(
   end
   //
 
+  // busy
+  always @(posedge clk, posedge reset) begin
+    if (reset) begin
+      busy <= 0;
+    end else begin
+      case (addr_weight)
+        40963: busy <= 1;
+        40964: busy <= 0;
+      endcase
+    end
+  end
+  //
+
+endmodule
+
+module CLA32 (
+  // input port
+  input [31:0] a,
+  input [31:0] b,
+  input        cin,
+  // output port
+  output [32:0] out
+);
+
+  wire cout0;
+  wire cout1;
+  wire cout2;
+
+  //
+  CLA8 cla0 (.a(a[7:0]),   .b(b[7:0]),   .cin(cin),   .sum(out[7:0]),   .cout(cout0)   );
+  CLA8 cla1 (.a(a[15:8]),  .b(b[15:8]),  .cin(cout0), .sum(out[15:8]),  .cout(cout1)   );
+  CLA8 cla2 (.a(a[23:16]), .b(b[23:16]), .cin(cout1), .sum(out[23:16]), .cout(cout2)   );
+  CLA8 cla3 (.a(a[31:24]), .b(b[31:24]), .cin(cout2), .sum(out[31:24]), .cout(out[32]) );
+  //
+  
+endmodule
+
+module CLA8 (
+  // input port
+  input [7:0] a,
+  input [7:0] b,
+  input       cin,
+  // output port
+  // output [8:0] out
+  output [7:0] sum,
+  output       cout
+);
+
+  wire [7:0] p;
+  wire [7:0] g;
+  wire [6:0] c; // CLA_FA　carry in
+
+  //
+  CLG clg8 (
+    .cin(cin),
+    .p(p),
+    .g(g),
+    .cout({cout, c[6:0]})
+  );
+  //
+
+  //
+  CLA_FA cla_fa0 (.a(a[0]), .b(b[0]), .cin(cin), .sum(sum[0]), .g(g[0]), .p(p[0]));
+  //
+
+  //
+  genvar i;
+
+  generate
+  for (i=1;i<8;i=i+1) begin:cla_fa
+    CLA_FA cla_fa (.a(a[i]), .b(b[i]), .cin(c[i-1]), .sum(sum[i]), .g(g[i]), .p(p[i]));
+  end
+  endgenerate
+  //
+  
+endmodule
+
+module CLG (
+  // input port
+  input cin,
+  input [7:0] p,
+  input [7:0] g,
+  // output port
+  output [7:0] cout
+);
+
+  assign cout[0] = (cin & p[0])                                                  | (g[0])                                                                                                                                                                                                                                                                     ;
+  assign cout[1] = (cin & p[0] & p[1])                                           | (g[0] & p[1])                                           | (g[1])                                                                                                                                                                                                           ;
+  assign cout[2] = (cin & p[0] & p[1] & p[2])                                    | (g[0] & p[1] & p[2])                                    | (g[1] & p[2])                                    | (g[2])                                                                                                                                                        ;
+  assign cout[3] = (cin & p[0] & p[1] & p[2] & p[3])                             | (g[0] & p[1] & p[2] & p[3])                             | (g[1] & p[2] & p[3])                             | (g[2] & p[3])                             | (g[3] )                                                                                                           ;
+  assign cout[4] = (cin & p[0] & p[1] & p[2] & p[3] & p[4])                      | (g[0] & p[1] & p[2] & p[3] & p[4])                      | (g[1] & p[2] & p[3] & p[4])                      | (g[2] & p[3] & p[4])                      | (g[3] & p[4])                      | (g[4])                                                                       ;
+  assign cout[5] = (cin & p[0] & p[1] & p[2] & p[3] & p[4] & p[5])               | (g[0] & p[1] & p[2] & p[3] & p[4] & p[5])               | (g[1] & p[2] & p[3] & p[4] & p[5])               | (g[2] & p[3] & p[4] & p[5])               | (g[3] & p[4] & p[5])               | (g[4] & p[5])               | (g[5])                                         ;
+  assign cout[6] = (cin & p[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6])        | (g[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6])        | (g[1] & p[2] & p[3] & p[4] & p[5] & p[6])        | (g[2] & p[3] & p[4] & p[5] & p[6])        | (g[3] & p[4] & p[5] & p[6])        | (g[4] & p[5] & p[6])        | (g[5] & p[6])         | (g[6])                 ;
+  assign cout[7] = (cin & p[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[0] & p[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[1] & p[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[2] & p[3] & p[4] & p[5] & p[6] & p[7]) | (g[3] & p[4] & p[5] & p[6] & p[7]) | (g[4] & p[5] & p[6] & p[7]) | (g[5] & p[6] & p[7])  | (g[6] & p[7]) | (g[7]) ;
+  
+endmodule
+
+module CLA_FA ( // without carry out
+  // input port
+  input a,
+  input b,
+  input cin,
+  // output port
+  output sum,
+  output p,
+  output g
+);
+
+  assign sum = a^b^cin;
+  assign p   = a|b;
+  assign g   = a&b;
+  
 endmodule
 
 module mul (
@@ -803,7 +1003,7 @@ module mul (
   );
   //
 
-  // 
+  // out = sum4 + carry4
   reg [11:0] out_temp0; // msb is carry-bit
   reg [10:0] out_temp1;
   reg [10:0] out_temp2;

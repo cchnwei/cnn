@@ -1,5 +1,5 @@
 `timescale 1ns/10ps
-`define CYCLE      20.0          	  // Modify your clock period here (do not larger than 25)
+`define CYCLE      12.0          	  // Modify your clock period here (do not larger than 25)
 `define End_CYCLE  200000000          // Modify cycle times once your design need more cycle times!
 
 `define gray_image     "../../dat_grad/gray_image.txt"                 // Open in Quartus
