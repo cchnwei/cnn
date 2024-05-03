@@ -9,5 +9,4 @@ Convolutional Neural Network:
 7.Leaky-ReLU (10 outputs)
 
 Design multiplier using booth encoding combined with wallace tree
-
 Reduce critical path with carry-lookahead adder, conditional-sum adder, pipelined adder
