@@ -840,24 +840,29 @@ module mul (
 );
 
   // define reg or wire
-  reg [20:0] add0;
-  reg [18:0] add1;
-  reg [16:0] add2;
-  reg [14:0] add3;
-  reg [12:0] add4;
-  reg [10:0] add5;
-  reg [8:0]  add6;
-  // 
+  reg  [20:0] add0;
+  reg  [18:0] add1;
+  reg  [16:0] add2;
+  reg  [14:0] add3;
+  reg  [12:0] add4;
+  reg  [10:0] add5;
+  reg  [8:0]  add6;
+  wire [8:0]  in1_shf;
+  //
+
+  // logic
+  assign in1_shf = in1<<1;
+  //
 
   // booth encoding
   always @(*) begin
     add0=0;
     case ({in2[1:0],1'b0})
       3'b000, 3'b111 : add0 =  0; 
-      3'b001, 3'b010 : add0 = $signed( in1); 
-      3'b101, 3'b110 : add0 = $signed(-in1); 
-      3'b011         : add0 = $signed( (in1<<1)); 
-      3'b100         : add0 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add0 = $signed( in1     ); 
+      3'b101, 3'b110 : add0 = $signed(-in1     ); 
+      3'b011         : add0 = $signed( in1_shf ); 
+      3'b100         : add0 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -865,10 +870,10 @@ module mul (
     add1=0;
     case (in2[3:1])
       3'b000, 3'b111 : add1 =  0; 
-      3'b001, 3'b010 : add1 = $signed( in1); 
-      3'b101, 3'b110 : add1 = $signed(-in1); 
-      3'b011         : add1 = $signed( (in1<<1)); 
-      3'b100         : add1 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add1 = $signed( in1     ); 
+      3'b101, 3'b110 : add1 = $signed(-in1     ); 
+      3'b011         : add1 = $signed( in1_shf ); 
+      3'b100         : add1 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -876,10 +881,10 @@ module mul (
     add2=0;
     case (in2[5:3])
       3'b000, 3'b111 : add2 =  0; 
-      3'b001, 3'b010 : add2 = $signed( in1); 
-      3'b101, 3'b110 : add2 = $signed(-in1); 
-      3'b011         : add2 = $signed( (in1<<1)); 
-      3'b100         : add2 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add2 = $signed( in1     ); 
+      3'b101, 3'b110 : add2 = $signed(-in1     ); 
+      3'b011         : add2 = $signed( in1_shf ); 
+      3'b100         : add2 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -887,10 +892,10 @@ module mul (
     add3=0;
     case (in2[7:5])
       3'b000, 3'b111 : add3 =  0; 
-      3'b001, 3'b010 : add3 = $signed( in1); 
-      3'b101, 3'b110 : add3 = $signed(-in1); 
-      3'b011         : add3 = $signed( (in1<<1)); 
-      3'b100         : add3 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add3 = $signed( in1     ); 
+      3'b101, 3'b110 : add3 = $signed(-in1     ); 
+      3'b011         : add3 = $signed( in1_shf ); 
+      3'b100         : add3 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -898,10 +903,10 @@ module mul (
     add4=0;
     case (in2[9:7])
       3'b000, 3'b111 : add4 =  0; 
-      3'b001, 3'b010 : add4 = $signed( in1); 
-      3'b101, 3'b110 : add4 = $signed(-in1); 
-      3'b011         : add4 = $signed( (in1<<1)); 
-      3'b100         : add4 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add4 = $signed( in1     ); 
+      3'b101, 3'b110 : add4 = $signed(-in1     ); 
+      3'b011         : add4 = $signed( in1_shf ); 
+      3'b100         : add4 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -909,10 +914,10 @@ module mul (
     add5=0;
     case (in2[11:9])
       3'b000, 3'b111 : add5 =  0; 
-      3'b001, 3'b010 : add5 = $signed( in1); 
-      3'b101, 3'b110 : add5 = $signed(-in1); 
-      3'b011         : add5 = $signed( (in1<<1)); 
-      3'b100         : add5 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add5 = $signed( in1     ); 
+      3'b101, 3'b110 : add5 = $signed(-in1     ); 
+      3'b011         : add5 = $signed( in1_shf ); 
+      3'b100         : add5 = $signed(-in1_shf ); 
     endcase
   end
 
@@ -920,10 +925,10 @@ module mul (
     add6=0;
     case ({in2[12],in2[12:11]})
       3'b000, 3'b111 : add6 =  0; 
-      3'b001, 3'b010 : add6 = $signed( in1); 
-      3'b101, 3'b110 : add6 = $signed(-in1); 
-      3'b011         : add6 = $signed( (in1<<1)); 
-      3'b100         : add6 = $signed(-(in1<<1)); 
+      3'b001, 3'b010 : add6 = $signed( in1     ); 
+      3'b101, 3'b110 : add6 = $signed(-in1     ); 
+      3'b011         : add6 = $signed( in1_shf ); 
+      3'b100         : add6 = $signed(-in1_shf ); 
     endcase
   end
   //
